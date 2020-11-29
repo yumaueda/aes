@@ -1,5 +1,6 @@
 `default_nettype none
-`timescale       1ns / 1ps
+`timeunit        1ns
+`timeprecision   1ps
 
 `define          WORD 32
 `define          NB   4   // number of data words
