@@ -1,4 +1,4 @@
-module SHIFTROWS #(
+module shiftrows #(
     parameter WORD = 32,
     parameter NB   = 4
 ) (

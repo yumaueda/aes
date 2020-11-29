@@ -1,4 +1,4 @@
-module SUBBYTES #(
+module subbytes #(
     parameter WORD = 32,
     parameter NB   = 4
 ) (
@@ -13,7 +13,7 @@ module SUBBYTES #(
     generate
         genvar i;
         for (i = 0; i < WORD*NB; i = i + 8) begin
-            SBOX sbox (.i_premap(i_block[i+7:i]), .o_postmap(postmap[i+7:i]));
+            sbox sbox_n (.i_premap(i_block[i+7:i]), .o_postmap(postmap[i+7:i]));
         end
     endgenerate
 

@@ -1,4 +1,4 @@
-module ADDROUNDKEY #(
+module addroundkey #(
     parameter WORD = 32,
     parameter NB   = 4
 ) (

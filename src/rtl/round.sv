@@ -1,10 +1,9 @@
-module ROUND #(
+module round #(
     parameter WORD = 32,
     parameter NB   = 4
 ) (
     input  wire               clk, rst, i_valid,
     input  wire [WORD*NB-1:0] i_block, i_roundkey,
-    input  wire [3:0]         i_round,
     output wire               o_valid,
     output wire [WORD*NB-1:0] o_block
 );
@@ -12,7 +11,7 @@ module ROUND #(
     wire               sub_valid_shift, shift_valid_mix, mix_valid_add;
     wire [WORD*NB-1:0] sub_block_shift, shift_block_mix, mix_block_add;
 
-    SUBBYTES #(
+    subbytes #(
         .WORD(WORD),
         .NB(NB)
     ) sub (
@@ -21,7 +20,7 @@ module ROUND #(
         .o_block(sub_block_shift)
     );
 
-    SHIFTROWS #(
+    shiftrows #(
         .WORD(WORD),
         .NB(NB)
     ) shift (
@@ -31,7 +30,7 @@ module ROUND #(
         .o_block(shift_block_mix)
     );
 
-    MIXCOLUMNS #(
+    mixcolumns #(
         .WORD(WORD),
         .NB(NB)
     ) mix (
@@ -42,7 +41,7 @@ module ROUND #(
         .o_block(mix_block_add)
     );
 
-    ADDROUNDKEY #(
+    addroundkey #(
         .WORD(WORD),
         .NB(NB)
     ) add (

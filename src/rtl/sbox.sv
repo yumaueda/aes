@@ -1,4 +1,4 @@
-module SBOX (
+module sbox (
     input  wire [7:0] i_premap,
     output reg  [7:0] o_postmap
 );
