@@ -91,3 +91,4 @@
 !Makefile
 !README*
 !*.sh
+!*.cpp
