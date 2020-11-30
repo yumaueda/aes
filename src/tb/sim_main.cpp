@@ -51,6 +51,7 @@ int main(int argc, char **argv)
     Verilated::traceEverOn(true);
 
     Vround *top = new Vround;
+    // TODO: Use FST istead of VCD
     VerilatedVcdC *tfp = new VerilatedVcdC;
 
     top->trace(tfp, TRACE_LEVEL);
