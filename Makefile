@@ -18,6 +18,7 @@ sim:
 	gtkwave round.vcd
 
 clean:
+	rm -f round.vcd
 	rm -rf obj_dir
 
 .PHONY: lint sim clean
