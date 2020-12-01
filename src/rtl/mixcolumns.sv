@@ -9,6 +9,7 @@ module mixcolumns #(
 );
 
     wire [WORD*NB-1:0] postmap;
+    reg                valid_staged;
 
     generate
         genvar i;
@@ -26,9 +27,11 @@ module mixcolumns #(
     always @(posedge clk) begin
         if (!rst) begin
             o_valid      <= '0;
+            valid_staged <= '0;
         end
         else begin
-            o_valid      <= i_valid;
+            valid_staged <= i_valid;
+            o_valid      <= valid_staged;
         end
     end
 
