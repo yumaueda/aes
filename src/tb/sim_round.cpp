@@ -6,6 +6,7 @@
 
 #define TRACE_LEVEL                 99
 #define MASTER_CLK_HALF             (10/2)          // 100MHz
+#define SIM_TIME                    50
 
 // Cipher
 #define FIPS_CIPHER_START3          0x193de3be
@@ -83,7 +84,7 @@ int main(int argc, char **argv)
     top->i_roundkey[2] = FIPS_CIPHER_ROUND_KEY2;
     top->i_roundkey[3] = FIPS_CIPHER_ROUND_KEY3;
 
-    while (sc_time_stamp() < 50) {
+    while (sc_time_stamp() < SIM_TIME) {
         if (main_time % MASTER_CLK_HALF == 0) {
             top->clk = top->clk ? 0 : 1;
             if (top->clk && !top->rst)
@@ -114,9 +115,10 @@ int main(int argc, char **argv)
 
     printf("Result: \x1b[1m");
     if (pass)
-        printf("\x1b[32m" "\tPass\n");
+        printf("\x1b[32m" "\tpassed\n");
     else
-        printf("\x1b[31m" "\tFail\n");
+        printf("\x1b[31m" "\tfailed\n");
+    printf("\x1b[0m");
 
     tfp->close();
     top->final();
