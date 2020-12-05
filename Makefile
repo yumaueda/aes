@@ -22,7 +22,8 @@ sim:
 	./obj_dir/Vkeyexp
 
 clean:
-	rm -f round.vcd
+	rm -f sim_round.vcd
+	rm -f sim_keyexp_128.vcd
 	rm -rf obj_dir
 
 .PHONY: lint sim clean
