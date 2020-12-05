@@ -5,9 +5,11 @@ module keyexpunit #(
     parameter ITERMODNK = 0,
     parameter ITERDIVNK = 0
 ) (
-    input  wire            clk, rst, i_valid,
+    input  wire            clk, rst,
+    input  wire            i_valid,
     input  wire [WORD-1:0] i_wi_1,
     input  wire [WORD-1:0] i_wi_nk,
+    output reg             o_valid,
     output wire [WORD-1:0] o_wi
 );
 
@@ -52,7 +54,14 @@ module keyexpunit #(
     assign o_wi = interkey2 ^ i_wi_nk;
 
     always @(posedge clk) begin
-        interkey2 <= interkey1;
+        if (!rst) begin
+            interkey2 <= '0;
+            o_valid   <= '0;
+        end
+        else if (i_valid) begin
+            interkey2 <= interkey1;
+            o_valid   <= i_valid;
+        end
     end
 
 endmodule
