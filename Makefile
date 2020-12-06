@@ -12,10 +12,13 @@ lint:
 
 sim:
 	$(verilator) $(vflags_sim) --top-module round\
-		--exe $(tb_dir)/sim_round.cpp $(rtl_src)
-	$(verilator) $(vflags_sim) --top-module keyexp\
-		--exe $(tb_dir)/sim_keyexp.cpp $(rtl_src)
+		--exe $(tb_dir)/sim_round.cpp $(addprefix $(rtl_dir)/, round.sv\
+		addroundkey.sv subbytes.sv sbox.sv shiftrows.sv mixcolumns.sv\
+		mapcolumn.sv polymult.sv)
 	make -j -C obj_dir -f Vround.mk Vround
+	$(verilator) $(vflags_sim) --top-module keyexp\
+		--exe $(tb_dir)/sim_keyexp.cpp $(addprefix $(rtl_dir)/, keyexp.sv\
+		keyexpunit.sv sbox.sv)
 	make -j -C obj_dir -f Vkeyexp.mk Vkeyexp
 	./obj_dir/Vround
 	./obj_dir/Vkeyexp
