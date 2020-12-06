@@ -58,9 +58,15 @@ module round #(
 
         always @(posedge clk) begin
             shift_valid_staged1 <= shift_valid_regormix;
-            shift_valid_staged2 <= shift_valid_staged1;
             shift_block_staged1 <= shift_block_regormix;
+
+            shift_valid_staged2 <= shift_valid_staged1;
             shift_block_staged2 <= shift_block_staged1;
+        end
+
+        always_comb begin
+            regormix_valid_add = shift_valid_staged2;
+            regormix_block_add = shift_block_staged2;
         end
     end
     endgenerate
