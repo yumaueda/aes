@@ -8,8 +8,7 @@ tb_dir := ./src/tb
 rtl_src := $(wildcard $(rtl_dir)/*.sv)
 
 lint:
-	$(verilator) $(vflags_lint) --top-module round $(rtl_src)
-	$(verilator) $(vflags_lint) --top-module keyexp $(rtl_src)
+	$(verilator) $(vflags_lint) --top-module cipher $(rtl_src)
 
 sim:
 	$(verilator) $(vflags_sim) --top-module round\
