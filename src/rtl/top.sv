@@ -2,13 +2,13 @@
 `timescale                   1ns / 1ps
 
 `define          WORD        32
-`define          NB          4   // number of data words
+`define          NB          4          // number of data words
 
-`define          NK4             // 128 bit key mode
-/*--------------------------------------------------
-`define          NK6             // 196 bit key mode
-`define          NK8             // 256 bit key mode
- --------------------------------------------------*/
+`define          NK4                    // 128 bit key mode
+/*---------------------------------------------------------
+`define          NK6                    // 196 bit key mode
+`define          NK8                    // 256 bit key mode
+ ---------------------------------------------------------*/
 
 `define          ENC_ONLY
 /*-----------------------
@@ -78,7 +78,22 @@ module top #(
      if we increment the counter by one when WRAP == true.
      -------------------------------------------------------------------*/
 ) (
-
+    input  wire                 clk, rst,
+    input  wire                 i_keyexp_en,
+    input  wire [NK*WORD-1:0]   i_key,
+    input  wire [1:0]           i_mode,
+    input  wire [WORD*NB-1:0]   i_nonce,
+    input  wire [7:0]           i_noncesize,
+    input  wire                 i_axi4s_tvalid,
+    input  wire                 o_axi4s_tready,
+    input  wire [WORD*NB-1:0]   i_axi4s_tdata,
+    input  wire                 i_axi4s_tlast,
+    input  wire [WORD*NB/8-1:0] i_axi4s_tstrb,
+    output wire                 o_axi4s_tvalid,
+    input  wire                 i_axi4s_tready,
+    output wire [WORD*NB-1:0]   o_axi4s_tdata,
+    output wire                 o_axi4s_tlast,
+    output wire [WORD*NB/8-1:0] o_axi4s_tstrb
 );
 
 endmodule
