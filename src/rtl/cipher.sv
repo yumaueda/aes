@@ -3,7 +3,9 @@ module cipher #(
     parameter NB   = 4,
     parameter NK   = 4,
     parameter NR   = 10,
-    parameter WRAP = 0                 // see description below
+    parameter ECB  = 0,                       // unimplemented
+    parameter CTR  = 0,                       // unimplemented
+    parameter WRAP = 0                        // see description below
     /*-------------------------------------------------------------------
      true: see the entire block as a counter. wrap around on entire block
      false: wrap around only on counter.
