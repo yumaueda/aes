@@ -13,7 +13,7 @@ module cipher #(
      i.e.
      
      Suppose nonce/counter == 0xffffffff_ffffffff_ffffffff_ffffffff.
-     We would go back to 0x00000000_00000000_00000000_00000000
+     It would go back to 0x00000000_00000000_00000000_00000000
      if we increment the counter by one when WRAP == true.
      -------------------------------------------------------------------*/
 ) (
@@ -25,30 +25,31 @@ module cipher #(
     input  wire [WORD*NB-1:0]   i_block,      // tdata: plaintext
     input  wire [WORD*NB-1:0]   i_nonce,      // nonce: for CTR mode.
     input  wire [7:0]           i_nonce_size, // [0, 128)
-    input  wire                 i_last,       // tlast: for counter reset
-    input  wire [STRBWIDTH-1:0] i_strb,       // tstrb: for CTR mode. must be '1 when i_last == 0
+    input  wire                 i_last,       // also for counter reset
+    input  wire [WORD*NB/8-1:0] i_strb,       // tstrb: for CTR mode. must be '1 when i_last == 0
     output wire                 o_valid,
+    output wire                 o_last,
+    output wire [WORD*NB/8-1:0] o_strb,
     output wire [WORD*NB-1:0]   o_block
 );
-    localparam STRBWIDTH =  WORD*NB/8;
+    localparam TC = NR*4+1;
 
     typedef enum logic {ENC_ECB, ENC_CTR} mode_t;
-
     mode_t               mode = i_mode;
 
     reg  [WORD*NB-1:0]   counter;
 
     wire [WORD-1:0]      expanded_w [NB*(NR+1)-1:0];
 
-    reg  [WORD*NB-1:0]   block_staged [(NR+1)*4-1:0];
-    reg  [STRBWIDTH-1:0] strb_staged [(NR+1)*4-1:0];
+    reg  [WORD*NB-1:0]   block_staged [TC-1:0];
+    reg                  last_staged  [TC-1:0];
+    reg  [WORD*NB/8-1:0] strb_staged  [TC-1:0];
 
     wire [WORD*NB-1:0]   block_post_in;
     wire [WORD*NB-1:0]   block_pre_out;
 
-    wire [NR-1:0]        valid_round;
-    wire [WORD*NB-1:0]   valid_block [NR-1:0];
-
+    wire [NR-1:0]        valid_interround;
+    wire [WORD*NB-1:0]   block_interround [NR-1:0];
 
     keyexp #(
         .WORD(WORD),
@@ -68,8 +69,8 @@ module cipher #(
         .*,  // clk, rst, i_valid
         .i_block(block_post_in),
         .i_roundkey({expanded_w[0], expanded_w[1], expanded_w[2], expanded_w[3]}),
-        .o_valid(valid_round[0]),
-        .o_block(valid_block[0])
+        .o_valid(valid_interround[0]),
+        .o_block(block_interround[0])
     );
 
     genvar i;
@@ -81,15 +82,15 @@ module cipher #(
                 .FINAL(0)
             ) round_n (
                 .*,  // clk, rst
-                .i_valid(valid_round[i]),
-                .i_block(valid_block[i]),
+                .i_valid(valid_interround[i]),
+                .i_block(block_interround[i]),
                 .i_roundkey({
                         expanded_w[(i+1)*4+0],
                         expanded_w[(i+1)*4+1],
                         expanded_w[(i+1)*4+2],
                         expanded_w[(i+1)*4+3]}),
-                .o_valid(valid_round[i+1]),
-                .o_block(valid_block[i+1])
+                .o_valid(valid_interround[i+1]),
+                .o_block(block_interround[i+1])
             );
         end
 
@@ -99,19 +100,20 @@ module cipher #(
             .FINAL(1)
         ) round_n (
             .*,  // clk, rst, o_valid,
-            .i_valid(valid_round[NR-1]),
-            .i_block(valid_block[NR-1]),
+            .i_valid(valid_interround[NR-1]),
+            .i_block(block_interround[NR-1]),
             .i_roundkey({
-                    expanded_w[NR*4+0],
-                    expanded_w[NR*4+0],
-                    expanded_w[NR*4+0],
-                    expanded_w[NR*4+0]}),
+                    expanded_w[NB*(NR+1)-4],
+                    expanded_w[NB*(NR+1)-3],
+                    expanded_w[NB*(NR+1)-2],
+                    expanded_w[NB*(NR+1)-1]}),
             .o_block(block_pre_out)
         );
 
-        for (i = 0; i < (NR+1)*4-1; i += 1) begin
+        for (i = 0; i < TC-1; i += 1) begin
             always @(posedge clk) begin
                 block_staged[i+1] <= block_staged[i];
+                last_staged[i+1]  <= last_staged[i];
                 strb_staged[i+1]  <= strb_staged[i];
             end
         end
@@ -119,6 +121,7 @@ module cipher #(
 
     always @(posedge clk) begin
         block_staged[0] <= i_block;
+        last_staged[0]  <= i_last;
         strb_staged[0]  <= i_strb;
     end
 
@@ -157,26 +160,31 @@ module cipher #(
             end
         end
     end
-    endgenerate
 
+    //if (ECB == 1) begin
     always_comb begin
         if (mode == ENC_ECB) begin
             o_block = block_pre_out;
         end
     end
+    //end
 
-    generate
-        for (i = 0; i < STRBWIDTH; i += 1) begin
+    if (CTR == 1) begin
+        for (i = 0; i < WORD*NB/8; i += 1) begin
             always_comb begin
                 if (mode == ENC_CTR) begin
-                    o_block[WORD*NB-i*8-1:WORD*NB-(i+1)*8] = strb_staged[(NR+1)*4-1][STRBWIDTH-1-i] == 1'b1 ?
+                    o_block[WORD*NB-i*8-1:WORD*NB-(i+1)*8] = strb_staged[(NR+1)*4-1][WORD*NB/8-1-i] == 1'b1 ?
                         block_pre_out[WORD*NB-i*8-1:WORD*NB-(i+1)*8] ^ block_staged[(NR+1)*4-1][WORD*NB-i*8-1:WORD*NB-(i+1)*8] :
                         block_pre_out[WORD*NB-i*8-1:WORD*NB-(i+1)*8];
                 end
             end
         end
+    end
+
     endgenerate
 
     assign block_post_in = mode == ENC_ECB ? i_block : i_nonce + counter;
+    assign o_last        = last_staged[TC-1];
+    assign o_strb        = strb_staged[TC-1];
 
 endmodule

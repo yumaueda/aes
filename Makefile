@@ -20,8 +20,14 @@ sim:
 		--exe $(tb_dir)/sim_keyexp.cpp $(addprefix $(rtl_dir)/, keyexp.sv\
 		keyexpunit.sv sbox.sv)
 	make -j -C obj_dir -f Vkeyexp.mk Vkeyexp
+	$(verilator) $(vflags_sim) --top-module cipher\
+		--exe $(tb_dir)/sim_cipher.cpp $(addprefix $(rtl_dir)/, cipher.sv\
+		keyexp.sv keyexpunit.sv sbox.sv round.sv addroundkey.sv subbytes.sv\
+		shiftrows.sv mixcolumns.sv mapcolumn.sv polymult.sv)
+	make -j -C obj_dir -f Vcipher.mk Vcipher
 	./obj_dir/Vround
 	./obj_dir/Vkeyexp
+	./obj_dir/Vcipher
 
 clean:
 	rm -f sim_round.vcd
