@@ -15,6 +15,7 @@ module keyexpunit #(
 
     wire [WORD-1:0] interkey1;
     reg  [WORD-1:0] interkey2;
+    reg  [WORD-1:0] wi_nk_staged;
 
     generate if (ITERMODNK == 0) begin
         wire [WORD-1:0] rotword = {i_wi_1[23:0], i_wi_1[31:24]}, subword;
@@ -51,7 +52,7 @@ module keyexpunit #(
     end
     endgenerate
 
-    assign o_wi = interkey2 ^ i_wi_nk;
+    assign o_wi = interkey2 ^ wi_nk_staged;
 
     always @(posedge clk) begin
         if (!rst) begin
@@ -59,8 +60,9 @@ module keyexpunit #(
             o_valid   <= '0;
         end
         else if (i_valid) begin
-            interkey2 <= interkey1;
-            o_valid   <= i_valid;
+            wi_nk_staged <= i_wi_nk;
+            interkey2    <= interkey1;
+            o_valid      <= i_valid;
         end
     end
 
