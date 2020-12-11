@@ -44,6 +44,8 @@ vluint64_t main_time = 0;
 
 int main(int argc, char **argv)
 {
+    int i;
+
     // TODO: Use FST instead of VCD
     Verilated::commandArgs(argc, argv);
     Verilated::traceEverOn(true);
@@ -96,8 +98,11 @@ int main(int argc, char **argv)
             top->i_roundkey[2] = FIPS_CIPHER_ROUND_KEY2;
             top->i_roundkey[3] = FIPS_CIPHER_ROUND_KEY3;
         }
-        if (main_time >= 16)
+        if (main_time >= 16) {
             top->i_valid = 0;
+            for (i = 0; i < 4; i++)
+                top->i_block[i] = 0;
+        }
         top->eval();
         tfp->dump(++main_time);
     }
