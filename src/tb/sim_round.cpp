@@ -42,10 +42,6 @@
 
 vluint64_t main_time = 0;
 
-double sc_time_stamp(void) {
-    return main_time;
-}
-
 int main(int argc, char **argv)
 {
     // TODO: Use FST instead of VCD
@@ -74,24 +70,34 @@ int main(int argc, char **argv)
 
     top->clk = 1;
     top->rst = 0;
-    top->i_valid = 1;
-    top->i_block[0] = FIPS_CIPHER_START0;
-    top->i_block[1] = FIPS_CIPHER_START1;
-    top->i_block[2] = FIPS_CIPHER_START2;
-    top->i_block[3] = FIPS_CIPHER_START3;
-    top->i_roundkey[0] = FIPS_CIPHER_ROUND_KEY0;
-    top->i_roundkey[1] = FIPS_CIPHER_ROUND_KEY1;
-    top->i_roundkey[2] = FIPS_CIPHER_ROUND_KEY2;
-    top->i_roundkey[3] = FIPS_CIPHER_ROUND_KEY3;
+    top->i_valid = 0;
+    top->i_block[0] = 0;
+    top->i_block[1] = 0;
+    top->i_block[2] = 0;
+    top->i_block[3] = 0;
+    top->i_roundkey[0] = 0;
+    top->i_roundkey[1] = 0;
+    top->i_roundkey[2] = 0;
+    top->i_roundkey[3] = 0;
 
-    while (sc_time_stamp() < SIM_TIME) {
+    while (main_time < SIM_TIME) {
         if (main_time % MASTER_CLK_HALF == 0) {
             top->clk = top->clk ? 0 : 1;
-            if (top->clk && !top->rst)
-                top->rst = 1;
-            else if (top->clk && top->i_valid)
-                top->i_valid = 0;
         }
+        if (main_time >= 4) top->rst = 1;
+        if (main_time >= 14) {
+            top->i_valid = 1;
+            top->i_block[0] = FIPS_CIPHER_START0;
+            top->i_block[1] = FIPS_CIPHER_START1;
+            top->i_block[2] = FIPS_CIPHER_START2;
+            top->i_block[3] = FIPS_CIPHER_START3;
+            top->i_roundkey[0] = FIPS_CIPHER_ROUND_KEY0;
+            top->i_roundkey[1] = FIPS_CIPHER_ROUND_KEY1;
+            top->i_roundkey[2] = FIPS_CIPHER_ROUND_KEY2;
+            top->i_roundkey[3] = FIPS_CIPHER_ROUND_KEY3;
+        }
+        if (main_time >= 16)
+            top->i_valid = 0;
         top->eval();
         tfp->dump(++main_time);
     }
@@ -103,26 +109,28 @@ int main(int argc, char **argv)
             top->o_block[0]);
 
     printf("Expected State:\t{%#08x, %#08x, %#08x, %#08x}\n",
-            top->o_block[3],
-            top->o_block[2],
-            top->o_block[1],
-            top->o_block[0]);
+            FIPS_CIPHER_AFT_ADD3,
+            FIPS_CIPHER_AFT_ADD2,
+            FIPS_CIPHER_AFT_ADD1,
+            FIPS_CIPHER_AFT_ADD0);
 
     pass = top->o_block[0] == FIPS_CIPHER_AFT_ADD0 &&
            top->o_block[1] == FIPS_CIPHER_AFT_ADD1 &&
            top->o_block[2] == FIPS_CIPHER_AFT_ADD2 &&
            top->o_block[3] == FIPS_CIPHER_AFT_ADD3;
 
-    printf("Result: \x1b[1m");
-    if (pass)
-        printf("\x1b[32m" "\tpassed\n");
-    else
-        printf("\x1b[31m" "\tfailed\n");
-    printf("\x1b[0m");
-
     tfp->close();
     top->final();
     delete top;
+
+    printf("Result: \x1b[1m");
+    if (pass) {
+        printf("\x1b[32m" "\tpassed\n\x1b[0m");
+        return 0;
+    } else {
+        printf("\x1b[31m" "\tfailed\n\x1b[0m");
+        return 1;
+    }
 
     return 0;
 }
