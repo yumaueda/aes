@@ -6,7 +6,7 @@
 
 #define TRACE_LEVEL                 99
 #define MASTER_CLK_HALF             (10/2)      // 100MHz
-#define SIM_TIME_128                400
+#define SIM_TIME_128                410
 
 // Expansion of a 128-bit Cipher Key
 #define FIPS_KEYEXP_128_CIPHER_KEY3 0x2b7e1516
@@ -85,6 +85,7 @@ int main(int argc, char **argv)
     VerilatedVcdC *tfp = new VerilatedVcdC;
 
     int i;
+    bool r;
     size_t len = sizeof(fips_keyexp_128_w)/sizeof(fips_keyexp_128_w[0]);
 
     top->trace(tfp, TRACE_LEVEL);
@@ -99,29 +100,39 @@ int main(int argc, char **argv)
 
     top->clk = 1;
     top->rst = 0;
-    top->i_valid = 1;
-    top->i_key[0] = FIPS_KEYEXP_128_CIPHER_KEY0;
-    top->i_key[1] = FIPS_KEYEXP_128_CIPHER_KEY1;
-    top->i_key[2] = FIPS_KEYEXP_128_CIPHER_KEY2;
-    top->i_key[3] = FIPS_KEYEXP_128_CIPHER_KEY3;
+    top->i_valid = 0;
+    top->i_key[0] = 0;
+    top->i_key[1] = 0;
+    top->i_key[2] = 0;
+    top->i_key[3] = 0;
 
     while (sc_time_stamp() < SIM_TIME_128) {
         if (main_time % MASTER_CLK_HALF == 0) {
             top->clk = top->clk ? 0 : 1;
-            if (top->clk && !top->rst)
-                top->rst = 1;
-            else if (top->clk && top->i_valid)
-                top->i_valid = 0;
+        }
+        if (main_time >= 4) top->rst = 1;
+        if (main_time >= 14) {
+            top->i_valid = 1;
+            top->i_key[0] = FIPS_KEYEXP_128_CIPHER_KEY0;
+            top->i_key[1] = FIPS_KEYEXP_128_CIPHER_KEY1;
+            top->i_key[2] = FIPS_KEYEXP_128_CIPHER_KEY2;
+            top->i_key[3] = FIPS_KEYEXP_128_CIPHER_KEY3;
+        }
+        if (main_time >= 16) {
+            top->i_valid = 0;
+            for (i = 0; i < 4; i++)
+                top->i_key[i] = 0;
         }
         top->eval();
         tfp->dump(++main_time);
     }
 
-    test(top, fips_keyexp_128_w, len);
+    r = test(top, fips_keyexp_128_w, len);
 
     tfp->close();
     top->final();
     delete top;
 
-    return 0;
+    if (r) return 0;
+    else   return 1;
 }
