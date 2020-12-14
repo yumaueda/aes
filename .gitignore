@@ -92,3 +92,4 @@
 !README*
 !*.sh
 !*.cpp
+!*.hpp
